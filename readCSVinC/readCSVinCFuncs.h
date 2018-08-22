@@ -9,9 +9,9 @@ typedef struct {
 	int nrow;
 	int ncol;
 	double** matrix;
-} Dim_t;
+} matrx;
 
-inline Dim_t getDim(const char *fileDir) {
+inline matrx getDim(const char *fileDir) {
 	int nrow = 1, ncol = 1;
 
 	/*________________________________open_file_and_check_it________________________________*/
@@ -22,7 +22,7 @@ inline Dim_t getDim(const char *fileDir) {
 	/*________get_data_dimensions________*/
 	char c = fgetc(fi);
 
-	Dim_t Dim = { 1, 1 };
+	matrx Dim = { 1, 1 };
 	while (c != '\n') {
 		if (c == ',') Dim.ncol++;
 		c = fgetc(fi);
@@ -37,10 +37,22 @@ inline Dim_t getDim(const char *fileDir) {
 	return Dim;
 }
 
-inline Dim_t readCSV(const char* fileDir) {
+inline void displayMatrix(matrx M) {
+	
+	for (int a = 0; a < M.nrow; a++) {
+		for (int b = 0; b < M.ncol; b++) {
+			//printf("%i ", M[a][b]); // without pointers
+			printf("%.2f ", *(*(M.matrix + a) + b)); // with pointers
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
+
+inline matrx readCSV(const char* fileDir) {
 
 	/*___________________get_data_dimensions____________________*/
-	Dim_t dataDim = getDim("C:\\Users\\avicent\\Documents\\datos.txt");
+	matrx dataDim = getDim("C:\\Users\\avicent\\Documents\\datos.txt");
 	printf("Data dimensions: (%i, %i)\n\n", dataDim.nrow, dataDim.ncol);
 
 
@@ -101,16 +113,6 @@ inline Dim_t readCSV(const char* fileDir) {
 
 	fclose(fi);
 
-	/*___________________displaying_data________________________*/
-	for (int a = 0; a < dataDim.nrow; a++) {
-		for (int b = 0; b < dataDim.ncol; b++) {
-			//printf("%i ", M[a][b]); // without pointers
-			printf("%.2f ", *(*(M + a) + b)); // with pointers
-		}
-		printf("\n");
-	}
-	printf("\n");
-
 
 	dataDim.matrix = M;
 	return(dataDim);
@@ -128,9 +130,9 @@ inline double sq(double value) {
 	return value * value;
 }
 
-inline Dim_t corr(Dim_t M) {
+inline matrx corr(matrx M) {
 
-	Dim_t result;
+	matrx result;
 	result.ncol = M.ncol;
 	result.nrow = M.ncol;
 	result.matrix = (double**)malloc(sizeof(double*) * M.ncol);
@@ -148,13 +150,13 @@ inline Dim_t corr(Dim_t M) {
 
 	for (int i = 0; i < M.ncol; i++) {
 		for (int j = i + 1; j < M.ncol; j++) {
-			// calculus of necessary elements for correlation computation
 			
+			// calculus of necessary elements for correlation computation
 			for (int element = 0; element < M.nrow; element++) {
 				x[element] = M.matrix[element][i];
-				x_square[element] = M.matrix[element][i] * M.matrix[element][i];
+				x_square[element] = sq(M.matrix[element][i]);
 				y[element] = M.matrix[element][j];
-				y_square[element] = M.matrix[element][j] * M.matrix[element][j];
+				y_square[element] = sq(M.matrix[element][j]);
 				xy[element] = M.matrix[element][i] * M.matrix[element][j];
 			}
 
@@ -168,4 +170,21 @@ inline Dim_t corr(Dim_t M) {
 	}
 
 	return result;
+}
+
+
+inline void writeCSV(matrx M, const char* filedir) {
+	FILE* f;
+	errno_t err = fopen_s(&f, filedir, "w");
+	if (err != 0) printf("Error in writeDim function: unable to open the file.\n");
+
+	for (int i = 0; i < M.nrow; i++) {
+		for (int j = 0; j < M.ncol; j++) {
+			fprintf(f, "%f", M.matrix[i][j]);
+			if (j != M.nrow - 1) fprintf(f, ",");
+		}
+		fprintf(f, "\n");
+	}
+
+	fclose(f);
 }
